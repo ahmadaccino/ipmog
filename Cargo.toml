@@ -2,6 +2,10 @@
 name = "ipmog"
 version = "0.1.0"
 edition = "2021"
+description = "Your IP geolocation on a world map in the terminal"
+license = "MIT"
+repository = "https://github.com/ahmadaccino/ipmog"
+authors = ["Ahmad"]
 
 [dependencies]
 ratatui = { version = "0.29", features = ["crossterm"] }

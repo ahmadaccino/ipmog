@@ -5,7 +5,7 @@ mod ui;
 use std::time::Duration;
 
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
 
 use app::App;
@@ -27,9 +27,10 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
         if event::poll(Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') => app.on_key('q'),
-                        KeyCode::Char('r') => app.on_key('r'),
+                    match (key.code, key.modifiers) {
+                        (KeyCode::Char('c'), KeyModifiers::CONTROL) => app.on_key('q'),
+                        (KeyCode::Char('q'), _) => app.on_key('q'),
+                        (KeyCode::Char('r'), _) => app.on_key('r'),
                         _ => {}
                     }
                 }

@@ -81,23 +81,40 @@ fn render_loading(frame: &mut Frame, tick: u64) {
 fn render_loaded(frame: &mut Frame, ip_info: &crate::ip::IpInfo) {
     let area = frame.area();
 
+    // Outer padding: center everything on screen
+    let v_pad = Layout::vertical([
+        Constraint::Percentage(8),
+        Constraint::Min(0),
+        Constraint::Percentage(8),
+    ])
+    .split(area);
+
+    let h_pad = Layout::horizontal([
+        Constraint::Percentage(5),
+        Constraint::Min(0),
+        Constraint::Percentage(5),
+    ])
+    .split(v_pad[1]);
+
+    let content_area = h_pad[1];
+
     let outer = Layout::vertical([
         Constraint::Length(1), // title bar
         Constraint::Min(10),  // main content
         Constraint::Length(1), // keybindings
     ])
-    .split(area);
+    .split(content_area);
 
     // Title bar
     let title = Paragraph::new(" IP MOG")
         .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
     frame.render_widget(title, outer[0]);
 
-    // Main area: map (left) + info (right)
-    let main = Layout::horizontal([Constraint::Percentage(65), Constraint::Percentage(35)])
+    // Main area: info (left) + map (right)
+    let main = Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)])
         .split(outer[1]);
 
-    // Map canvas
+    // Map canvas (right side)
     let lat = ip_info.latitude;
     let lon = ip_info.longitude;
     let span = 30.0;
@@ -116,7 +133,6 @@ fn render_loaded(frame: &mut Frame, ip_info: &crate::ip::IpInfo) {
                 resolution: MapResolution::High,
                 color: Color::DarkGray,
             });
-            // Location marker
             ctx.draw(&Points {
                 coords: &[(lon, lat)],
                 color: Color::Red,
@@ -132,37 +148,70 @@ fn render_loaded(frame: &mut Frame, ip_info: &crate::ip::IpInfo) {
                 )),
             );
         });
-    frame.render_widget(canvas, main[0]);
+    frame.render_widget(canvas, main[1]);
 
-    // Info panel
+    // Info panel (left side) — logo + data, vertically centered
     let info_block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray))
         .title(" INFO ");
 
+    // Build gradient logo lines
+    let logo_lines: Vec<Line> = ASCII_ART
+        .iter()
+        .map(|line| {
+            let chars: Vec<char> = line.chars().collect();
+            let total = chars.len();
+            Line::from(
+                chars
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &ch)| {
+                        let progress = i as f64 / total as f64;
+                        let color = gradient_cyan_magenta(progress);
+                        Span::styled(
+                            ch.to_string(),
+                            Style::default().fg(color).add_modifier(Modifier::BOLD),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
+
     let asn_str = ip_info.asn.to_string();
     let lat_str = format!("{:.4}", ip_info.latitude);
     let lon_str = format!("{:.4}", ip_info.longitude);
 
-    let info_lines = vec![
-        info_line("IP", &ip_info.ip, Color::Cyan),
-        Line::raw(""),
-        info_line("City", &ip_info.city, Color::Green),
-        info_line("Region", &ip_info.region, Color::Green),
-        info_line("Postal", &ip_info.postal_code, Color::Green),
-        info_line("Country", &ip_info.country, Color::Green),
-        Line::raw(""),
-        info_line("ISP", &ip_info.isp, Color::Magenta),
-        info_line("ASN", &asn_str, Color::Magenta),
-        Line::raw(""),
-        info_line("Timezone", &ip_info.timezone, Color::Yellow),
-        Line::raw(""),
-        info_line("Lat", &lat_str, Color::Blue),
-        info_line("Lon", &lon_str, Color::Blue),
-    ];
+    // Assemble all content: logo, then gap, then info fields
+    let mut all_lines: Vec<Line> = Vec::new();
+    all_lines.extend(logo_lines);
+    all_lines.push(Line::raw(""));
+    all_lines.push(info_line("IP", &ip_info.ip, Color::Cyan));
+    all_lines.push(Line::raw(""));
+    all_lines.push(info_line("City", &ip_info.city, Color::Green));
+    all_lines.push(info_line("Region", &ip_info.region, Color::Green));
+    all_lines.push(info_line("Postal", &ip_info.postal_code, Color::Green));
+    all_lines.push(info_line("Country", &ip_info.country, Color::Green));
+    all_lines.push(Line::raw(""));
+    all_lines.push(info_line("ISP", &ip_info.isp, Color::Magenta));
+    all_lines.push(info_line("ASN", &asn_str, Color::Magenta));
+    all_lines.push(Line::raw(""));
+    all_lines.push(info_line("Timezone", &ip_info.timezone, Color::Yellow));
+    all_lines.push(Line::raw(""));
+    all_lines.push(info_line("Lat", &lat_str, Color::Blue));
+    all_lines.push(info_line("Lon", &lon_str, Color::Blue));
 
-    let info = Paragraph::new(info_lines).block(info_block);
-    frame.render_widget(info, main[1]);
+    // Vertically center content inside the info block
+    let content_height = all_lines.len() as u16;
+    let inner_height = main[0].height.saturating_sub(2); // subtract border
+    let top_padding = inner_height.saturating_sub(content_height) / 2;
+
+    let mut centered_lines: Vec<Line> = vec![Line::raw(""); top_padding as usize];
+    centered_lines.extend(all_lines);
+
+    let info = Paragraph::new(centered_lines).block(info_block);
+    frame.render_widget(info, main[0]);
 
     // Bottom keybindings
     let keys = Paragraph::new(Line::from(vec![

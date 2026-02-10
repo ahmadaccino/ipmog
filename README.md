@@ -1,6 +1,8 @@
 # ipmog
 
-Your IP geolocation, rendered on a world map in the terminal.
+does your friends ever mog their IP in front of you? Do they ever laugh at your screenshot of a shitty ip checker websites with with sex pill ads on it?
+
+well, say goodbye to those days. because there is now the epic IP Mog Checker! mog your ip to your friends in a sexy tui that will make all the foids leave their men to flock to yyou
 
 ![screenshot](screenshot.png)
 <!-- Replace with an actual terminal screenshot or gif -->

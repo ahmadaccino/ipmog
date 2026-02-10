@@ -1,0 +1,4 @@
+name = "ipmog-worker"
+main = "src/index.ts"
+compatibility_date = "2026-02-10"
+account_id = "YOUR_ACCOUNT_ID_HERE"

@@ -1,0 +1,11 @@
+{
+  "name": "ipmog-worker",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250210.0",
+    "wrangler": "^4"
+  }
+}

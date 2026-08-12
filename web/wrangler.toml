@@ -1,8 +1,0 @@
-name = "ipmog-web"
-main = "src/index.ts"
-compatibility_date = "2026-02-10"
-account_id = "75562db84cc394bc9e6836c7a7090694"
-
-routes = [
-  { pattern = "ipmog.shnitzel.org", custom_domain = true }
-]

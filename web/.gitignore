@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Wrangler
+wrangler.toml
+.wrangler/
+
+# Environment / secrets
+.env
+.env.*
+
+# Build output
+dist/

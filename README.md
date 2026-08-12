@@ -54,14 +54,19 @@ By default ipmog hits `https://ip.shnitzel.org`. To use your own Worker:
 IPMOG_URL=https://your-worker.example.com ipmog
 ```
 
-## Worker
+## Workers
 
-The `worker/` directory contains the Cloudflare Worker that serves the geolocation API. It uses Cloudflare's built-in `request.cf` object to extract IP info — no third-party APIs needed.
+Two Cloudflare Workers, sharing the geolocation logic in `shared/geo.ts`. Both use Cloudflare's built-in `request.cf` object — no third-party APIs needed.
+
+| Directory | URL | What it serves |
+|-----------|-----|----------------|
+| `worker/` | `ip.shnitzel.org` | JSON API consumed by the TUI |
+| `web/` | `ipmog.shnitzel.org` | daisyUI web page with a map pin of your location (`/api` also returns the JSON) |
 
 ### Setup
 
 ```
-cd worker
+cd worker   # or: cd web
 cp wrangler.toml.example wrangler.toml
 # Edit wrangler.toml with your Cloudflare account ID
 npm install

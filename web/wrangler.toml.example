@@ -1,8 +1,8 @@
-name = "ipmog-worker"
+name = "ipmog-web"
 main = "src/index.ts"
 compatibility_date = "2026-02-10"
 account_id = "YOUR_ACCOUNT_ID_HERE"
 
 routes = [
-  { pattern = "ip.shnitzel.org", custom_domain = true }
+  { pattern = "ipmog.shnitzel.org", custom_domain = true }
 ]

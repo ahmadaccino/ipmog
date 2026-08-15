@@ -4,12 +4,13 @@ use ratatui::{
     text::{Line, Span},
     widgets::{
         Block, Borders, Paragraph,
-        canvas::{Canvas, Map, MapResolution, Points},
+        canvas::{Canvas, Line as CanvasLine, Map, MapResolution, Points},
     },
     Frame,
 };
 
 use crate::app::{App, AppState};
+use crate::{geo_cities, geo_highways};
 
 const ASCII_ART: &[&str] = &[
     " ██╗██████╗     ███╗   ███╗ ██████╗  ██████╗ ",
@@ -117,31 +118,90 @@ fn render_loaded(frame: &mut Frame, ip_info: &crate::ip::IpInfo) {
     // Map canvas (right side)
     let lat = ip_info.latitude;
     let lon = ip_info.longitude;
-    let span = 30.0;
+    let span = 4.0;
+
+    let x_min = lon - span * 1.5;
+    let x_max = lon + span * 1.5;
+    let y_min = lat - span;
+    let y_max = lat + span;
+
+    // Determine city detail level based on zoom
+    let max_city_tier = if span <= 10.0 { 3 } else if span <= 20.0 { 2 } else { 1 };
+    let visible_cities = geo_cities::cities_in_view(x_min, x_max, y_min, y_max, max_city_tier);
+    let visible_highways = geo_highways::highways_in_view(x_min, x_max, y_min, y_max);
 
     let map_block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray))
         .title(" MAP ");
 
+    let city_label = ip_info.city.clone();
+
     let canvas = Canvas::default()
         .block(map_block)
-        .x_bounds([lon - span * 1.5, lon + span * 1.5])
-        .y_bounds([lat - span, lat + span])
+        .x_bounds([x_min, x_max])
+        .y_bounds([y_min, y_max])
         .paint(move |ctx| {
+            // Layer 1: Country outlines (base map)
             ctx.draw(&Map {
                 resolution: MapResolution::High,
                 color: Color::DarkGray,
             });
+
+            // Layer 2: Highway lines
+            ctx.layer();
+            for hw in &visible_highways {
+                for pair in hw.waypoints.windows(2) {
+                    ctx.draw(&CanvasLine {
+                        x1: pair[0].0,
+                        y1: pair[0].1,
+                        x2: pair[1].0,
+                        y2: pair[1].1,
+                        color: Color::Rgb(60, 60, 90),
+                    });
+                }
+            }
+
+            // Layer 3: City dots
+            ctx.layer();
+            for city in &visible_cities {
+                let color = match city.tier {
+                    1 => Color::White,
+                    2 => Color::Gray,
+                    _ => Color::DarkGray,
+                };
+                ctx.draw(&Points {
+                    coords: &[(city.lon, city.lat)],
+                    color,
+                });
+            }
+
+            // Layer 4: User location marker
+            ctx.layer();
             ctx.draw(&Points {
                 coords: &[(lon, lat)],
                 color: Color::Red,
             });
+
+            // Labels layer: city names
+            for city in &visible_cities {
+                let style = match city.tier {
+                    1 => Style::default().fg(Color::White),
+                    _ => Style::default().fg(Color::DarkGray),
+                };
+                ctx.print(
+                    city.lon + 0.5,
+                    city.lat + 0.5,
+                    Line::from(Span::styled(city.name, style)),
+                );
+            }
+
+            // User location label (always on top)
             ctx.print(
-                lon + 1.5,
-                lat + 1.5,
+                lon + 1.0,
+                lat + 1.0,
                 Line::from(Span::styled(
-                    format!("◉ {}", ip_info.city),
+                    format!("◉ {}", city_label),
                     Style::default()
                         .fg(Color::Yellow)
                         .add_modifier(Modifier::BOLD),

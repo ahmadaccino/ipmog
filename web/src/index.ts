@@ -32,7 +32,7 @@ function page(geo: GeoInfo): string {
 <div class="mx-auto max-w-5xl p-6 space-y-6">
 	<div class="text-center space-y-2">
 		<h1 class="text-4xl font-black tracking-tight">ipmog</h1>
-		<p class="opacity-70">the epic IP mog checker — no sex pill ads</p>
+		<p class="opacity-70">the epic IP mog checker</p>
 	</div>
 
 	<div class="card bg-base-100 shadow-xl">

@@ -1,4 +1,6 @@
 mod app;
+mod geo_cities;
+mod geo_highways;
 mod ip;
 mod ui;
 
